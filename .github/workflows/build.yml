@@ -76,13 +76,14 @@ jobs:
         run: |
           pip install -r molecule/requirements.txt
 
-      - name: Create galaxy dependencies file in 'molecule/default/'
-        run: |
-          cp roles/requirements.yml molecule/default/requirements.yml
-
       - name: Install required Ansible Collections
         run: |
           ansible-galaxy collection install community.molecule
+          ansible-galaxy install -r molecule/default/requirements.yml
+
+      - name: Create galaxy dependencies file in 'molecule/default/'
+        run: |
+          cp roles/requirements.yml molecule/default/requirements.yml
 
       - name: Set environment variable with timestamp for making sure Molecule would create unique AWS resources
         run: |
@@ -99,6 +100,8 @@ jobs:
           AWS_ACCESS_KEY_ID_1: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_SECRET_ACCESS_KEY_1: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWSIAM_USER: sotred in system environment variables
+          # AWSIAM_POLICY_NAME: sotred in system environment variables
           MOLECULE_VERBOSITY: 0
           PROFILE_TASKS_SORT_ORDER: 'none'
           PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
@@ -118,13 +121,20 @@ jobs:
         env:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
+
       - name: Set environment variable with timestamp for making sure Molecule would create unique AWS resources
         run: |
           TIMESTAMP=$(date --date "9 hours" "+%Y%m%d_%H:%M:%S")
+          VALUE=molecule_ansible2_${{ matrix.distro }}_${TIMESTAMP}
+          echo "PLATFORM_NAME=${VALUE}" >> $GITHUB_ENV
+          echo "KEYPAIR_NAME=${VALUE}" >> $GITHUB_ENV
+          echo "SECURITY_GROUP_NAME=${VALUE}" >> $GITHUB_ENV
+          echo "TAG_NAME=${VALUE}" >> $GITHUB_ENV
 
-          echo "PLATFORM_NAME=molecule_ansible_${{ matrix.distro }}_${TIMESTAMP}" >> $GITHUB_ENV
-          echo "KEYPAIR_NAME=molecule_ansible_${{ matrix.distro }}_${TIMESTAMP}" >> $GITHUB_ENV
-          echo "SECURITY_GROUP_NAME=molecule_ansible_${{ matrix.distro }}_${TIMESTAMP}" >> $GITHUB_ENV
+      - name: Set AWS resource creator name to system environment variables
+        run: |
+          author_email=$(git show -s --format='%ae' ${{ github.sha }})
+          echo "CREATED_BY=$author_email" >> $GITHUB_ENV
 
       - name: Test with molecule
         run: |
@@ -135,13 +145,14 @@ jobs:
           ANSIBLE_PYTHON_INTERPRETER: ${{ matrix.python_interpreter }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           # KEYPAIR_NAME: sotred in system environment variables
-          MOLECULE_VERBOSITY: 0
           # PLATFORM_NAME: sotred in system environment variables
+          MOLECULE_VERBOSITY: 0
           PROFILE_TASKS_SORT_ORDER: 'none'
           PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
-          PY_COLORS: '1'
           # SECURITY_GROUP_NAME: sotred in system environment variables
+          # TAG_NAME: sotred in system environment variables
           TZ: 'Asia/Tokyo'
+          PY_COLORS: '1'
           VPC_SUBNET_ID: ${{ secrets.VPC_SUBNET_ID }}
 
       - name: Delete AWS Access Key
@@ -152,6 +163,8 @@ jobs:
           AWS_ACCESS_KEY_ID_1: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_SECRET_ACCESS_KEY_1: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # AWSIAM_USER: sotred in system environment variables
+          # AWSIAM_POLICY_NAME: sotred in system environment variables
           MOLECULE_VERBOSITY: 0
           PROFILE_TASKS_SORT_ORDER: 'none'
           PROFILE_TASKS_TASK_OUTPUT_LIMIT: '200'
