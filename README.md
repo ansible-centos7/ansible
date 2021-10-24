@@ -1,4 +1,4 @@
-[![](https://github.com/ansible-playbooks-centos7/ansible/workflows/build/badge.svg)](https://github.com/ansible-playbooks-centos7/ansible/actions?query=workflow%3Abuild)
+# This repository is deprecated, no more changes shall be made to this repository.
 
 # Ansible Playbook - Ansible
 
